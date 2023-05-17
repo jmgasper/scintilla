@@ -169,7 +169,9 @@ class LineVector : public ILineVector {
 	static constexpr POS pos_cast(Sci::Position pos) noexcept {
 		return static_cast<POS>(pos);
 	}
-
+	static constexpr POS* pos_cast(const Sci::Position* pos) noexcept {
+		return (POS*)(pos);
+	}
 	// line_from_pos_cast(): return 32-bit or 64-bit value as Sci::Line 
 	// This avoids warnings from Visual C++ Code Analysis and shortens code
 	static constexpr Sci::Line line_from_pos_cast(POS line) noexcept {
@@ -213,7 +215,7 @@ public:
 	void InsertLines(Sci::Line line, const Sci::Position *positions, size_t lines, bool lineStart) override {
 		const POS lineAsPos = pos_cast(line);
 		if constexpr (sizeof(Sci::Position) == sizeof(POS)) {
-			starts.InsertPartitions(lineAsPos, positions, lines);
+			starts.InsertPartitions(lineAsPos, pos_cast(positions), lines);
 		} else {
 			starts.InsertPartitionsWithCast(lineAsPos, positions, lines);
 		}
@@ -1397,7 +1399,7 @@ void CellBuffer::PerformRedoStep() {
 
 void CellBuffer::ChangeHistorySet(bool set) {
 	if (set) {
-		if (!changeHistory && !uh.CanUndo()) {
+		if (!changeHistory) {
 			changeHistory = std::make_unique<ChangeHistory>(Length());
 		}
 	} else {
